@@ -24,7 +24,7 @@ export async function GET() {
         }) => ({
           experimentId: experiment.id,
           username: experiment.user.username,
-          seedWord: experiment.seedWord.word,
+          seedWord: experiment.seedWord?.word ?? "(시드워드 없음)",
           wordCount: experiment.words.map((word) => word.content).length,
           createdAt: experiment.createdAt,
         })

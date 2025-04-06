@@ -50,7 +50,7 @@ export async function DELETE(req: Request) {
     }
 
     const deletedWord = await prisma.seedWord.delete({
-      where: { id },
+      where: { id:id},
     });
 
     return NextResponse.json(

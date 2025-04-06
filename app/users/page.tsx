@@ -7,6 +7,8 @@ import axios from "axios";
 export default function UsersPage() {
   const [users, setUsers] = useState<{ id: string; username: string }[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editUsername, setEditUsername] = useState("");
   const [seedWords, setSeedWords] = useState<{ id: string; word: string }[]>(
     []
   );
@@ -50,6 +52,18 @@ export default function UsersPage() {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (confirm("정말 이 사용자를 삭제하시겠습니까?")) {
+      try {
+        await axios.delete(`/api/users/${userId}`);
+        setUsers(users.filter((user) => user.id !== userId));
+        if (selectedUserId === userId) setSelectedUserId(null);
+      } catch (error) {
+        console.error("Error deleting user:", error);
+      }
+    }
+  };
+
   const handleUserClick = (userId: string) => {
     setSelectedUserId(userId);
   };
@@ -64,6 +78,29 @@ export default function UsersPage() {
       router.push(`/experiments/outside-fmri/${response.data.id}`);
     } catch (error) {
       console.error("Error starting experiment:", error);
+    }
+  };
+
+  const handleEditClick = (userId: string, currentUsername: string) => {
+    setEditingUserId(userId);
+    setEditUsername(currentUsername);
+  };
+
+  const handleEditSave = async (userId: string) => {
+    if (!editUsername.trim()) return;
+    try {
+      const res = await axios.patch(`/api/users/${userId}`, {
+        username: editUsername,
+      });
+      setUsers(
+        users.map((user) =>
+          user.id === userId ? { ...user, username: res.data.username } : user
+        )
+      );
+      setEditingUserId(null);
+      setEditUsername("");
+    } catch (error) {
+      console.error("Error updating user:", error);
     }
   };
 
@@ -91,12 +128,45 @@ export default function UsersPage() {
             key={user.id}
             className="flex justify-between items-center py-2 border-b last:border-none"
           >
-            <button
-              onClick={() => handleUserClick(user.id)}
-              className="text-lg font-medium text-blue-600 hover:underline"
-            >
-              {user.username}
-            </button>
+            {editingUserId === user.id ? (
+              <>
+                <input
+                  type="text"
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value)}
+                  className="p-1 border rounded text-black"
+                />
+                <button
+                  onClick={() => handleEditSave(user.id)}
+                  className="ml-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-700"
+                >
+                  저장
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleUserClick(user.id)}
+                  className="text-lg font-medium text-blue-600 hover:underline"
+                >
+                  {user.username}
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEditClick(user.id, user.username)}
+                    className="ml-4 px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-700"
+                  >
+                    수정
+                  </button>
+                  <button
+                    onClick={() => handleDeleteUser(user.id)}
+                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-700"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </>
+            )}
           </li>
         ))}
       </ul>

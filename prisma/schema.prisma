@@ -10,16 +10,28 @@ datasource db {
 model User {
   id          String       @id @default(uuid())
   username    String       @unique
-  experiments Experiment[]
+  experiments Experiment[] @relation("UserToExperiment")
+}
+
+model SeedWord {
+  id          String       @id @default(uuid())
+  word        String       @unique
+  experiments Experiment[] @relation("SeedWordToExperiment")
 }
 
 model Experiment {
   id         String   @id @default(uuid())
   userId     String
-  seedWordId String
+  seedWordId String? // ✅ nullable
+
   createdAt  DateTime @default(now())
-  seedWord   SeedWord @relation(fields: [seedWordId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+
+  // ✅ 삭제 옵션은 여기! (User 삭제 시 실험도 삭제)
+  user       User     @relation("UserToExperiment", fields: [userId], references: [id], onDelete: Cascade)
+
+  // ✅ SeedWord 삭제 시 seedWordId는 null
+  seedWord   SeedWord? @relation("SeedWordToExperiment", fields: [seedWordId], references: [id], onDelete: SetNull)
+
   ratings    Rating[]
   words      Word[]
 }
@@ -29,14 +41,9 @@ model Word {
   experimentId String
   content      String
   createdAt    DateTime   @default(now())
-  ratings      Rating[]
-  experiment   Experiment @relation(fields: [experimentId], references: [id])
-}
 
-model SeedWord {
-  id          String       @id @default(uuid())
-  word        String       @unique
-  experiments Experiment[]
+  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  ratings      Rating[]
 }
 
 model Rating {
@@ -44,6 +51,7 @@ model Rating {
   experimentId String
   wordId       String
   score        Int
+
   experiment   Experiment @relation(fields: [experimentId], references: [id])
   word         Word       @relation(fields: [wordId], references: [id])
 }

@@ -38,6 +38,7 @@ export default function SeedWordsPage() {
     try {
       const confirm = window.confirm("정말로 이 시드 단어를 삭제하시겠습니까?");
       if (!confirm) return;
+      alert(id);
 
       await axios.delete(`/api/seedwords?id=${id}`);
       setSeedWords(seedWords.filter((seed) => seed.id !== id));
